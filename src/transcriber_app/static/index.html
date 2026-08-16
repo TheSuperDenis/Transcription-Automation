@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A private, local-first audio and video transcription tool.">
+    <meta name="color-scheme" content="dark">
+    <meta name="csrf-token" content="">
+    <title>Local Transcriber</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <main class="app-shell">
+      <header class="hero">
+        <div class="brand-row">
+          <a class="brand" href="/" aria-label="Local Transcriber home">
+            <span class="brand-mark" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+            </span>
+            <span>Local Transcriber</span>
+          </a>
+          <div class="privacy-pill">
+            <span class="privacy-dot" aria-hidden="true"></span>
+            Private by design
+          </div>
+        </div>
+
+        <div class="hero-copy">
+          <p class="eyebrow">Audio to text, on your machine</p>
+          <h1>Drop in a recording.<br><span>Take out the words.</span></h1>
+          <p class="hero-description">
+            Transcribe audio and video locally with Whisper. Your media stays on this computer.
+          </p>
+        </div>
+
+        <div class="runtime-strip" aria-label="Application status">
+          <div class="runtime-status">
+            <span id="server-indicator" class="status-indicator is-checking" aria-hidden="true"></span>
+            <div>
+              <span class="runtime-label">Transcriber</span>
+              <strong id="server-status">Checking local service…</strong>
+            </div>
+          </div>
+          <div class="runtime-divider" aria-hidden="true"></div>
+          <div class="runtime-note">
+            <span class="runtime-label">Output</span>
+            <strong>Saved locally as .txt</strong>
+          </div>
+        </div>
+      </header>
+
+      <section id="upload-section" class="panel upload-panel" aria-labelledby="upload-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="step-label">01 · Choose a recording</p>
+            <h2 id="upload-heading">What should we transcribe?</h2>
+          </div>
+          <span id="format-summary" class="format-summary">MOV · MP4 · MP3 · WAV + more</span>
+        </div>
+
+        <form id="upload-form" novalidate>
+          <input
+            id="file-input"
+            class="visually-hidden"
+            type="file"
+            name="file"
+            accept=".mov,.mp4,.m4a,.mp3,.wav,.webm,.mkv,.flac,.ogg,audio/*,video/*"
+          >
+
+          <div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-controls="file-input">
+            <div class="upload-glyph" aria-hidden="true">
+              <span class="upload-arrow"></span>
+            </div>
+            <div class="drop-copy">
+              <h3>Drop your recording here</h3>
+              <p>or <span class="browse-copy">browse your files</span></p>
+            </div>
+            <p id="size-note" class="drop-note">One audio or video file at a time</p>
+          </div>
+
+          <div id="selected-file" class="selected-file" hidden>
+            <div class="file-type" aria-hidden="true"><span id="file-extension">FILE</span></div>
+            <div class="file-copy">
+              <strong id="file-name"></strong>
+              <span id="file-meta"></span>
+            </div>
+            <button id="remove-file" class="icon-button" type="button" aria-label="Remove selected file">
+              <span aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div id="model-row" class="option-row" hidden>
+            <label for="model-select">
+              <span>Whisper model</span>
+              <small>Auto is recommended for this computer</small>
+            </label>
+            <select id="model-select" name="model">
+              <option value="auto">Auto</option>
+            </select>
+          </div>
+
+          <button id="transcribe-button" class="primary-button" type="submit" disabled>
+            <span>Transcribe recording</span>
+            <span class="button-arrow" aria-hidden="true">→</span>
+          </button>
+        </form>
+      </section>
+
+      <section id="processing-section" class="panel processing-panel" aria-labelledby="processing-heading" hidden>
+        <div class="processing-topline">
+          <div class="processing-title">
+            <span class="spinner" aria-hidden="true"></span>
+            <div>
+              <p class="step-label">02 · Working locally</p>
+              <h2 id="processing-heading">Preparing your recording</h2>
+            </div>
+          </div>
+          <time id="elapsed-time" class="elapsed-time">00:00</time>
+        </div>
+
+        <p id="processing-detail" class="processing-detail" aria-live="polite">
+          Uploading the file to the local transcriber…
+        </p>
+
+        <div id="progress-track" class="progress-track is-indeterminate">
+          <progress id="progress-bar" class="progress-bar" max="100" aria-label="Transcription progress"></progress>
+        </div>
+
+        <div class="job-facts">
+          <div class="fact">
+            <span>File</span>
+            <strong id="job-file">—</strong>
+          </div>
+          <div class="fact">
+            <span>Model</span>
+            <strong id="job-model">Auto</strong>
+          </div>
+          <div class="fact">
+            <span>Device</span>
+            <strong id="job-device">Selecting…</strong>
+          </div>
+        </div>
+      </section>
+
+      <section id="result-section" class="panel result-panel" aria-labelledby="result-heading" hidden>
+        <div class="panel-heading result-heading-row">
+          <div>
+            <p class="step-label success-label">03 · Transcript ready</p>
+            <h2 id="result-heading">Your recording is now text.</h2>
+          </div>
+          <span id="result-duration" class="result-duration"></span>
+        </div>
+
+        <div class="result-meta" aria-label="Transcript details">
+          <span id="result-file-name"></span>
+          <span class="meta-separator" aria-hidden="true">·</span>
+          <span id="result-stats">Plain text</span>
+          <span id="saved-indicator" class="saved-indicator">Saved locally</span>
+        </div>
+
+        <pre id="transcript-text" class="transcript" tabindex="0" aria-label="Transcript text"></pre>
+
+        <div class="result-actions">
+          <button id="copy-button" class="primary-button compact-button" type="button">
+            <span id="copy-button-label">Copy transcript</span>
+          </button>
+          <a id="download-button" class="secondary-button" href="#" download>Download .txt</a>
+          <button id="open-folder-button" class="secondary-button" type="button">Open output folder</button>
+          <button id="another-button" class="text-button" type="button">Transcribe another</button>
+        </div>
+      </section>
+
+      <section id="error-section" class="error-panel" role="alert" aria-labelledby="error-heading" hidden>
+        <div class="error-mark" aria-hidden="true">!</div>
+        <div>
+          <h2 id="error-heading">We couldn’t complete that transcription.</h2>
+          <p id="error-message">Please try again.</p>
+        </div>
+        <button id="dismiss-error" class="icon-button error-dismiss" type="button" aria-label="Dismiss error">
+          <span aria-hidden="true"></span>
+        </button>
+      </section>
+
+      <footer>
+        <p>Local Whisper transcription · No cloud upload · Original files stay untouched</p>
+      </footer>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

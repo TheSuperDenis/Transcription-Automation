@@ -1,0 +1,85 @@
+name: transcriptions-automation
+
+x-transcriber-common: &transcriber-common
+  init: true
+  restart: unless-stopped
+  ports:
+    - "127.0.0.1:${TRANSCRIBER_PORT:-43127}:8000"
+  environment: &transcriber-environment
+    TRANSCRIPTS_DIR: /data/transcripts
+    WORK_DIR: /data/work
+    WHISPER_CACHE_DIR: /models
+    XDG_CACHE_HOME: /models/runtime-cache
+    NUMBA_CACHE_DIR: /models/runtime-cache/numba
+    TORCH_HOME: /models/runtime-cache/torch
+    TRITON_CACHE_DIR: /models/runtime-cache/triton
+    WHISPER_MODEL: "${WHISPER_MODEL:-small.en}"
+    MAX_UPLOAD_BYTES: "${MAX_UPLOAD_BYTES:-2147483648}"
+  volumes:
+    - type: bind
+      source: ./transcripts
+      target: /data/transcripts
+    - type: volume
+      source: whisper-models
+      target: /models
+    - type: volume
+      source: transcriber-work
+      target: /data/work
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,nodev,size=512m
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  healthcheck:
+    test:
+      - CMD
+      - python
+      - -c
+      - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()"
+    interval: 5s
+    timeout: 4s
+    retries: 24
+    start_period: 10s
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  transcriber-cpu:
+    <<: *transcriber-common
+    profiles:
+      - cpu
+    build:
+      context: .
+      target: runtime-cpu
+      args:
+        PYTHON_IMAGE: "${PYTHON_IMAGE:-python:3.11.16-slim-bookworm}"
+        TORCH_VERSION: "${TORCH_VERSION:-2.11.0}"
+    image: transcriptions-automation:cpu
+    environment:
+      <<: *transcriber-environment
+      TRANSCRIBER_DEVICE: cpu
+
+  transcriber-gpu:
+    <<: *transcriber-common
+    profiles:
+      - gpu
+    build:
+      context: .
+      target: runtime-gpu
+      args:
+        PYTHON_IMAGE: "${PYTHON_IMAGE:-python:3.11.16-slim-bookworm}"
+        TORCH_VERSION: "${TORCH_VERSION:-2.11.0}"
+    image: transcriptions-automation:gpu
+    environment:
+      <<: *transcriber-environment
+      TRANSCRIBER_DEVICE: auto
+    gpus: all
+
+volumes:
+  whisper-models:
+  transcriber-work:
