@@ -56,13 +56,17 @@ Copy `.env.example` to `.env` and edit values only when needed:
 | --- | --- | --- |
 | `TRANSCRIBER_PORT` | `43127` | Localhost port opened in the browser |
 | `WHISPER_MODEL` | `small.en` | Whisper model name |
-| `MAX_UPLOAD_BYTES` | `2147483648` | Maximum upload size in bytes |
+| `MAX_UPLOAD_BYTES` | `4294967296` | Maximum upload size in bytes (4 GiB) |
 | `PYTHON_IMAGE` | `python:3.11.16-slim-bookworm` | Container base image |
 | `TORCH_VERSION` | `2.11.0` | CPU/CUDA PyTorch wheel version |
 
 English-only model names ending in `.en` are usually a good fit for English
 recordings. Larger models can improve accuracy but require more memory, storage,
 and processing time.
+
+Multipart uploads are temporarily spooled to the Docker work volume. For a
+4 GiB recording, keep at least 8 GiB of free disk space plus room for audio
+decoding and model files.
 
 ## Compose commands
 

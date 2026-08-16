@@ -8,13 +8,14 @@ x-transcriber-common: &transcriber-common
   environment: &transcriber-environment
     TRANSCRIPTS_DIR: /data/transcripts
     WORK_DIR: /data/work
+    TMPDIR: /data/work
     WHISPER_CACHE_DIR: /models
     XDG_CACHE_HOME: /models/runtime-cache
     NUMBA_CACHE_DIR: /models/runtime-cache/numba
     TORCH_HOME: /models/runtime-cache/torch
     TRITON_CACHE_DIR: /models/runtime-cache/triton
     WHISPER_MODEL: "${WHISPER_MODEL:-small.en}"
-    MAX_UPLOAD_BYTES: "${MAX_UPLOAD_BYTES:-2147483648}"
+    MAX_UPLOAD_BYTES: "${MAX_UPLOAD_BYTES:-4294967296}"
   volumes:
     - type: bind
       source: ./transcripts

@@ -27,8 +27,8 @@ def _positive_int(name: str, default: int) -> int:
 
 def _upload_limit_bytes() -> int:
     if os.getenv("MAX_UPLOAD_BYTES") is not None:
-        return _positive_int("MAX_UPLOAD_BYTES", 2 * 1024 * 1024 * 1024)
-    return _positive_int("MAX_UPLOAD_MB", 2048) * 1024 * 1024
+        return _positive_int("MAX_UPLOAD_BYTES", 4 * 1024 * 1024 * 1024)
+    return _positive_int("MAX_UPLOAD_MB", 4096) * 1024 * 1024
 
 
 @dataclass(frozen=True)

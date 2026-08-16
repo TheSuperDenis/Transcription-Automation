@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from transcriber_app import create_app
 from transcriber_app.__main__ import main as native_main
 from transcriber_app.app import _stream_upload
+from transcriber_app.config import Settings
 from transcriber_app.media import MediaError, MediaInfo, MediaTools
 from transcriber_app.security import sanitize_filename
 from transcriber_app.whisper_adapter import WhisperAdapter
@@ -284,6 +285,13 @@ def test_max_upload_mb_compatibility(
         assert payload["device"] == "auto"
     finally:
         app.extensions["job_manager"].shutdown()
+
+
+def test_default_upload_limit_is_four_gib(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("MAX_UPLOAD_BYTES", raising=False)
+    monkeypatch.delenv("MAX_UPLOAD_MB", raising=False)
+
+    assert Settings.from_env().max_upload_bytes == 4 * 1024 * 1024 * 1024
 
 
 def test_startup_removes_only_stale_app_owned_work(

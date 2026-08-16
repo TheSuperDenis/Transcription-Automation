@@ -13,6 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONPATH=/app/src \
     TRANSCRIPTS_DIR=/data/transcripts \
     WORK_DIR=/data/work \
+    TMPDIR=/data/work \
     WHISPER_CACHE_DIR=/models
 
 RUN apt-get update \
